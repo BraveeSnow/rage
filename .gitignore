@@ -1,0 +1,5 @@
+# rust builds
+target/
+
+# user prefs
+.vscode/
