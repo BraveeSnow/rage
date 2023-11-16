@@ -1,6 +1,5 @@
 mod args;
 mod commands;
-mod portage;
 
 use args::{RageCommands, RageOptions};
 use clap::Parser;

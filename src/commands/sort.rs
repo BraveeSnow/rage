@@ -5,10 +5,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{
-    args::RageSortOptions,
-    portage::package::{PackageAtom, PORTAGE_CONFIGDIR, PORTAGE_PACKAGE_USE},
-};
+use crate::args::RageSortOptions;
+use rage::portage::package::{PackageAtom, PORTAGE_CONFIGDIR, PORTAGE_PACKAGE_USE};
 
 pub fn rage_command_sort(opts: &RageSortOptions) {
     let package_uses: PathBuf = PathBuf::from(PORTAGE_CONFIGDIR).join(PORTAGE_PACKAGE_USE);

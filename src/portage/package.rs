@@ -27,7 +27,7 @@ impl<'a> From<&'a str> for PackageAtom<'a> {
             .expect("Invalid package atom");
         let version_pos: Option<Match<'_>> = PORTAGE_VERSION_DELIMITER.find(name_split.1);
         let version: Option<&str> = if let Some(pos) = version_pos {
-            let v = Some(&name_split.1[pos.start()..]);
+            let v = Some(&name_split.1[pos.start() + 1..]);
             name_split.1 = &name_split.1[..pos.start()];
             v
         } else {
