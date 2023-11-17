@@ -139,7 +139,7 @@ fn process_use_file(opts: &RageSortOptions, path: &Path) -> io::Result<()> {
 
 fn write_to_file(file_path: &Path, atoms: Vec<PackageAtom>, pretend_mode: bool) -> io::Result<()> {
     let file_str: Vec<String> = atoms.iter().map(|a| a.to_string()).collect();
-    println!("Wrote to file {}", file_path.display());
+    println!("Writing to file {}", file_path.display());
 
     if pretend_mode {
         println!("{}\n", file_str.join("\n"));
