@@ -1,5 +1,7 @@
+use std::io;
+
 use once_cell::sync::Lazy;
-use regex::{Match, Regex};
+use regex::Regex;
 
 // Constant variables for portage
 pub const PORTAGE_CONFIGDIR: &str = "/etc/portage";
@@ -8,6 +10,8 @@ pub const PORTAGE_PACKAGE_USE: &str = "package.use";
 pub const PORTAGE_VERSION_DELIMITER: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"-\d").expect("Portage version delimiter failed to compile"));
 
+/// The struct describing a package atom. To create a package atom from a
+/// string, it is recommended to call the `try_from` function.
 #[derive(Clone, Debug)]
 pub struct PackageAtom<'a> {
     pub name: &'a str,
@@ -16,36 +20,8 @@ pub struct PackageAtom<'a> {
     pub flags: Vec<UseFlag<'a>>,
 }
 
-impl<'a> From<&'a str> for PackageAtom<'a> {
-    /// Takes a string and converts it into a PackageAtom.
-    fn from(value: &'a str) -> Self {
-        let mut tokens: Vec<&str> = value.split_ascii_whitespace().collect();
-        let mut name_split: (&str, &str) = tokens
-            .get(0)
-            .expect("Package atom token collection failed")
-            .split_once('/')
-            .expect("Invalid package atom");
-        let version_pos: Option<Match<'_>> = PORTAGE_VERSION_DELIMITER.find(name_split.1);
-        let version: Option<&str> = if let Some(pos) = version_pos {
-            let v = Some(&name_split.1[pos.start() + 1..]);
-            name_split.1 = &name_split.1[..pos.start()];
-            v
-        } else {
-            None
-        };
-
-        tokens.remove(0);
-
-        PackageAtom {
-            name: name_split.1,
-            category: name_split.0,
-            version,
-            flags: tokens.into_iter().map(UseFlag::from).collect(),
-        }
-    }
-}
-
 impl<'a> ToString for PackageAtom<'a> {
+    /// Converts a package atom struct to a string readable by portage.
     fn to_string(&self) -> String {
         let mut package: String = format!("{}/{}", self.category, self.name);
         if let Some(v) = self.version {
@@ -57,6 +33,48 @@ impl<'a> ToString for PackageAtom<'a> {
         }
 
         package
+    }
+}
+
+impl<'a> TryFrom<&'a str> for PackageAtom<'a> {
+    type Error = io::Error;
+
+    /// Parses a string containing data of a package atom. The string passed
+    /// does not need to be trimmed as it is already done internally.
+    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
+        let trimmed: &'a str = value.trim();
+        let mut tokens: Vec<&str> = trimmed.split_ascii_whitespace().collect();
+        let mut version: Option<&'a str> = None;
+
+        // process name and category
+        let Some(atom_split) = tokens.first() else {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!("Invalid package atom: {}", trimmed),
+            ));
+        };
+        let Some(atom_tuple) = atom_split.split_once('/') else {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!("Invalid package atom: {}", trimmed),
+            ));
+        };
+        let (category, mut name): (&'a str, &'a str) = atom_tuple;
+
+        // check if version is specified
+        if let Some(version_match) = PORTAGE_VERSION_DELIMITER.find(name) {
+            version = Some(&name[version_match.start() + 1..]);
+            name = &name[..version_match.start()];
+        };
+
+        tokens.remove(0);
+
+        Ok(PackageAtom {
+            name,
+            category,
+            version,
+            flags: tokens.into_iter().map(UseFlag::from).collect(),
+        })
     }
 }
 

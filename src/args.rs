@@ -27,4 +27,7 @@ pub struct RageSortOptions {
     #[arg(short, long, default_value_t = false)]
     #[arg(help = "\x1b[31m*DESTRUCTIVE* Removes all versioning in package.use\x1b[30m")]
     pub remove_versions: bool,
+    #[arg(short, long, default_value_t = false)]
+    #[arg(help = "Sorts package atoms into files named after their category")]
+    pub split: bool,
 }
